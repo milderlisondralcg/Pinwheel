@@ -3,46 +3,78 @@
 
 import requests
 import datetime
+import traceback
+import sys
+import os
+import json
 
 now = datetime.datetime.now()
 
 from bs4 import BeautifulSoup
 
-products_per_page = 100
-last_page = 309
+products_per_page = 200
+last_page = 155
+total_links_captured = 0
+products_info = {}
 
-# Print when loop starts
-
+# Begin loop
 now = datetime.datetime.now()
 print("Process started: " + str(now))
+
+# Set headers
+headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'}
+
 for i in range(last_page):
     try:
         page_num = i + 1
         # Retrieve base url
-        url = 'https://www.biolegend.com/en-us/search-results?GroupID=&PageNum=' + str(page_num) + '&PageSize=200'
-        # print(url)
-        page = requests.get(url)
-
+        url = 'https://www.biolegend.com/en-us/search-results?GroupID=&PageNum=' + str(page_num) + '&PageSize=' + str(products_per_page)
+        page = requests.get(url, headers=headers)
+        
         # Create Beautiful Soup object
         soup_obj = BeautifulSoup(page.text,'html.parser')
 
+        try:
+            product_list = soup_obj.find(id='productsHolder')
+            #print(product_list)
+            products_list_items = product_list.find_all('h2')
+            print(len(products_list_items))
+            for link in products_list_items:
+                atags = link.find_all('a')
+                for tag in atags:
+                    href = tag.get('href')
+                    # print(href)
+                
+            for i in range(len(product_list)):
+                atags = link.find_all('a')
+                #print(atags)
+            
+            #create filename
+            json_file = "json/page" + str(page_num) + ".txt"
 
-        product_list = soup_obj.find(id='productsHolder')
-        products_list_items = product_list.find_all('h2')
-
-        for link in products_list_items:
-            atags = link.find_all('a')
-            for tag in atags:
-                href = tag.get('href')
-                # print(href)
-        if(i % 10 == 0):
-            now = datetime.datetime.now()
-            print("10 pages completed: " + str(now))
-            #print("10 pages completed")
-    except:
+            if os.path.exists(json_file):
+                os.remove(json_file)
+                print(f"File removed: {json_file}")
+            
+            total_links_captured =+ len(products_list_items)
+            for link in products_list_items:
+                atags = link.find_all('a')
+                for tag in atags:
+                    href = tag.get('href')
+                    with open(json_file,"a", encoding="utf-8") as text:
+                        text.write(href+"\n")
+            
+        except:
+            print(traceback.format_exc())
+            print("Could not get the list of urls from productsHolder element:")
+            print(url)
+    except Exception:
+        print(traceback.format_exc())
         print("An error occured")
         
 # Print after loop completes
+print(total_links_captured)
 now = datetime.datetime.now()
-print("10 pages completed: " + str(now))
+print(now)
+
 
