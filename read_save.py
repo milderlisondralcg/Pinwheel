@@ -1,4 +1,5 @@
 #Read text files and save each URL to db
+# As of 04/30/2024 processed 155 files in 7 minutes
 
 import mysql.connector
 import os
@@ -26,17 +27,27 @@ for entry in os.listdir(basepath):
 
         # Read through all lines within text file
         for line in file_content:
-            product_url = baseurl + line
+            product_url = baseurl + line.strip()
             try:
                 mycursor = mydb.cursor()
-                sql = "INSERT INTO product_urls (url) VALUES (%s)"
-                val = (product_url,) # comma added to allow 1 column to be inserted
-                mycursor.execute(sql,val)
 
-                mydb.commit()
-
+                sql = "SELECT url from product_urls WHERE url = '" + product_url + "'"
+                mycursor.execute(sql)
+                mycursor.fetchall()
+                if mycursor.rowcount == 0:
+                    try:
+                        sql = "INSERT INTO product_urls (url) VALUES (%s)"
+                        val = (product_url,) # comma added to allow 1 column to be inserted
+                        mycursor.execute(sql,val)
+                        mydb.commit()
+                    except Exception:
+                        print(traceback.format_exc())    
+                else:
+                    print("Product url exists: " + product_url)
+               
             except Exception:
                 print(traceback.format_exc())
+                
         fs.close() #close file to ensure it can be moved
         os.replace(json_source, json_source_destination)
 
