@@ -6,11 +6,14 @@ import os
 import time
 import datetime
 import traceback
+from pinwheel import Pinwheel
+Pinwheel.__init__()
 
 mydb = mysql.connector.connect(host='localhost',user='root',password='',database='pinwheel')
 baseurl = 'http://biolegend.com'
 basepath = 'json/'
 basepath_completed = 'json_processed/'
+total_urls_saved = 0
 
 now = datetime.datetime.now()
 print("Process started: " + str(now))
@@ -40,10 +43,12 @@ for entry in os.listdir(basepath):
                         val = (product_url,) # comma added to allow 1 column to be inserted
                         mycursor.execute(sql,val)
                         mydb.commit()
+                        total_urls_saved += 1
                     except Exception:
                         print(traceback.format_exc())    
                 else:
-                    print("Product url exists: " + product_url)
+                    log_message = "Product url exists: " + product_url
+                    Pinwheel.log_entry("SaveURL", log_message)
                
             except Exception:
                 print(traceback.format_exc())
@@ -53,6 +58,7 @@ for entry in os.listdir(basepath):
 
 now = datetime.datetime.now()
 print("Process completed: " + str(now))
+print("Total urls saved: " + str(total_urls_saved))
 
 # as of 4/30/2024 this process takes 3 minutes to complete for 11,749 records
 # from 95 files
