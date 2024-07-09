@@ -1,5 +1,7 @@
 # Scrape data
 # URL given
+
+# as of 04/30/2024 process requires 15 minutes to complete
     
 import requests
 import datetime
@@ -28,11 +30,21 @@ print("Process started: " + str(now))
 # Set headers
 headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'}
 
-#for i in range(last_page):
-for i in range(100,last_page):
+# Empty previous files, if needed
+folder = 'json'
+for filename in os.listdir(folder):
+    file_path =  os.path.join(folder, filename)
+    try:
+        if os.path.isfile(file_path) or os.path.islink(file_path):
+            os.unlink(file_path)
+            print(filename + " deleted")
+    except Exception as e:
+        print('Failed to delete %s. Reason: %s' % (file_path, e))
+        
+for i in range(last_page):
+#for i in range(100,last_page):
     try:
         page_num = i + 1
-        print(page_num)
         # Retrieve base url
         url = 'https://www.biolegend.com/en-us/search-results?GroupID=&PageNum=' + str(page_num) + '&PageSize=' + str(products_per_page)
         print(url)
@@ -45,7 +57,7 @@ for i in range(100,last_page):
             product_list = soup_obj.find(id='productsHolder')
             #print(product_list)
             products_list_items = product_list.find_all('h2')
-            print(len(products_list_items))
+            print("Number of products in page: " + str(len(products_list_items)))
             for link in products_list_items:
                 atags = link.find_all('a')
                 for tag in atags:
