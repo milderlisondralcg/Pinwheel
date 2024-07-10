@@ -40,9 +40,9 @@ for filename in os.listdir(folder):
             print(filename + " deleted")
     except Exception as e:
         print('Failed to delete %s. Reason: %s' % (file_path, e))
-        
+
+# Begin data retrieval
 for i in range(last_page):
-#for i in range(100,last_page):
     try:
         page_num = i + 1
         # Retrieve base url
