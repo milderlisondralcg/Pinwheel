@@ -1,12 +1,14 @@
 # Scrape data
 # URL given
 
+import mysql.connector
 import requests
 import datetime
 import traceback
-import sys
-import os
-import json
+import sys, os, json
+
+from pinwheel import Pinwheel
+#Pinwheel.__init__()
 
 from bs4 import BeautifulSoup
 
@@ -34,6 +36,8 @@ product_details_values = product_details.find_all('dd')
 product_info_data = {}
 product_details_data = {}
 total_data = {}
+reagent = {}
+reagent_attributes = {}
 
 # Add data to details list to Dictionary
 index = 0
@@ -81,20 +85,49 @@ for row in table.tbody.find_all('tr'):
             quantity_label = columns[3].find('label')
             quantity_input = quantity_label.find('input')
             inventory = quantity_input['data-stock']
-            reagent = {}
-            reagent_attributes = {}
-            reagent_attributes['size'] = size
-            reagent_attributes['price'] = price
-            reagent_attributes['inventory'] = inventory
+
+            reagent_attributes.update({"size":size,"price":price,"inventory":inventory})
             reagent['catalog_id'] = catalog_id
             reagent['attributes'] = reagent_attributes
-            print(reagent)
-            data = {"agent":{"catalog_id":catalog_id,"size":size,"price":price,"inventory":inventory}}
-            json_data = json.dumps(data)
+
+            ''' TODO: Insert Reagent information into data store '''
+            try:
+                mydb = mysql.connector.connect(host='localhost',user='root',password='',database='pinwheel')
+
+                try:
+                    mycursor = mydb.cursor()
+
+                    sql = "SELECT catalog_id from products WHERE catalog_id = '" + catalog_id + "'"
+                    mycursor.execute(sql)
+                    mycursor.fetchall()
+                    if mycursor.rowcount == 0:
+                        try:
+                            sql = "INSERT INTO products (catalog_id, price, size, inventory) VALUES (%s, %s, %s, %s)"
+                            val = (catalog_id, price, size, inventory) # comma added to allow 1 column to be inserted
+                            mycursor.execute(sql,val)
+                            mydb.commit()
+                            #total_urls_saved += 1
+                        except Exception:
+                            print(traceback.format_exc())    
+                    else:
+                        log_message = "Catalog id exists: " + catalog_id
+                        Pinwheel.log_entry("Save Reagent", log_message)
+                        print(log_message)
+                except Exception:
+                    print(traceback.format_exc())
+                
+            except Exception:
+                print("Could not connect to data store")
+                log_message = traceback.format_exc()    
+                Pinwheel.log_entry("Data store error", log_message)
+                sys.exit(1)
+    
+            
+            #data = {"agent":{"catalog_id":catalog_id,"size":size,"price":price,"inventory":inventory}}
+            #json_data = json.dumps(data)
             #print(json_data)
-            y = json.loads(json_data)
+            #y = json.loads(json_data)
   
-            #print(y)
             #create filename
             json_file = "json/" + str(catalog_id) + ".txt"
 
