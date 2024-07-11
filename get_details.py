@@ -81,25 +81,24 @@ for row in table.tbody.find_all('tr'):
             quantity_label = columns[3].find('label')
             quantity_input = quantity_label.find('input')
             inventory = quantity_input['data-stock']
-            data = {"agent":{"catalog_id":catalog_id,"size":size,"price":price}}
+            reagent = {}
+            reagent_attributes = {}
+            reagent_attributes['size'] = size
+            reagent_attributes['price'] = price
+            reagent_attributes['inventory'] = inventory
+            reagent['catalog_id'] = catalog_id
+            reagent['attributes'] = reagent_attributes
+            print(reagent)
+            data = {"agent":{"catalog_id":catalog_id,"size":size,"price":price,"inventory":inventory}}
             json_data = json.dumps(data)
             #print(json_data)
             y = json.loads(json_data)
   
-            print(y)
+            #print(y)
             #create filename
             json_file = "json/" + str(catalog_id) + ".txt"
-        
-        '''
-        zone = columns[1].text.strip()
-        area = columns[2].span.contents[0].strip('&0.')
-        population = columns[3].span.contents[0].strip('&0.')
-        density = columns[4].span.contents[0].strip('&0.')
-        homes_count = columns[5].span.contents[0].strip('&0.')
 
-        #df = df.append({'Neighborhood': neighborhood,  'Zone': zone, 'Area': area, 'Population': population, 'Density': density, 'Homes_count': homes_count}, ignore_index=True)
-        '''
-#product_detail_items_values = product_detail.find_all('td')
+
 
 
 
