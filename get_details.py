@@ -51,8 +51,11 @@ for heading in (product_details_headings):
 #total_data['product_info'] = product_info_data
 #total_data['product_details'] = product_details_data
 
+'''
 for x in (total_data):
     print("Heading : " + x + " \n" + total_data[x])
+'''
+
 # Get Catalog ID(s)
 table = soup_obj.find(id='variantsContainer')
 tbody = table.find('tbody') # Catalog IDs are in rows
@@ -75,14 +78,15 @@ for row in table.tbody.find_all('tr'):
                     # print(span_tag['data-price']) # get the value of attribute
                     price = span_tag['data-price']
                     #print(price)
-
+            quantity_label = columns[3].find('label')
+            quantity_input = quantity_label.find('input')
+            inventory = quantity_input['data-stock']
             data = {"agent":{"catalog_id":catalog_id,"size":size,"price":price}}
             json_data = json.dumps(data)
             #print(json_data)
             y = json.loads(json_data)
-            #print(y)
-    
-            #print(y)
+  
+            print(y)
             #create filename
             json_file = "json/" + str(catalog_id) + ".txt"
         
