@@ -11,8 +11,8 @@ import os
 import json
 from pinwheel import Pinwheel
 
-Pinwheel.__init__()
-
+#Pinwheel.__init__()
+Pinwheel()
 
 now = datetime.datetime.now()
 
