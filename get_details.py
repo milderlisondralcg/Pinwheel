@@ -29,20 +29,24 @@ except Exception:
     #print(traceback.format_exc())
     sys.exit(1)
 
-
-def get_urls():
+# Retrieve URLs
+def get_urls(limit):
              
     # Select a limited amount of URLs to read
     try:
         mycursor = mydb.cursor()
 
-        sql = "SELECT url from products_urls LIMIT 1"
+        sql = "SELECT url from products_urls WHERE `status` = 'Open' LIMIT " + str(limit)
         mycursor.execute(sql)
         result_urls = mycursor.fetchall()
 
         for x in result_urls:
             url = x[0]
-            get_url_details(url)
+            get_details_result = get_url_details(url)
+
+            update_sql = "UPDATE products_urls SET `status` = 'Closed' WHERE url = '" + url + "'"
+            mycursor.execute(update_sql)
+            commit_result = mydb.commit()
     except Exception:
         print(traceback.format_exc())
 
@@ -53,7 +57,8 @@ def get_urls():
 def get_url_details(url):
 
     #url = "http://biolegend.com/en-us/products/alexa-fluor-700-anti-human-cd64-antibody-17129"
-
+    print("Retrieving URL: ")
+    print(url)
     page = requests.get(url, headers=headers)
     soup_obj = BeautifulSoup(page.text,'html.parser')
     product_info = soup_obj.find(id='productInfo')
@@ -105,6 +110,7 @@ def get_url_details(url):
         if(columns != []):
             
             catalog_id = columns[0].text.strip()
+            print(catalog_id)
             if catalog_id:
                 size = columns[1].text.strip()
                 #print(catalog_id)
@@ -131,6 +137,7 @@ def get_url_details(url):
                         mycursor = mydb.cursor()
 
                         sql = "SELECT catalog_id from products WHERE catalog_id = '" + catalog_id + "'"
+                        print(sql)
                         mycursor.execute(sql)
                         mycursor.fetchall()
                         if mycursor.rowcount == 0:
@@ -138,7 +145,8 @@ def get_url_details(url):
                                 sql = "INSERT INTO products (catalog_id, price, size, inventory) VALUES (%s, %s, %s, %s)"
                                 val = (catalog_id, price, size, inventory) # comma added to allow 1 column to be inserted
                                 mycursor.execute(sql,val)
-                                mydb.commit()
+                                commit_result = mydb.commit()
+                                #return(commit_result)
                                 #total_urls_saved += 1
                             except Exception:
                                 print(traceback.format_exc())    
@@ -165,5 +173,5 @@ def get_url_details(url):
                 json_file = "json/" + str(catalog_id) + ".txt"
 
 
-get_urls()
+get_urls(1)
 
