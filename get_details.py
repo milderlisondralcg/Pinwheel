@@ -43,9 +43,9 @@ def get_urls(limit):
         for x in result_urls:
             url = x[0]
             get_details_result = get_url_details(url)
-
-            update_sql = "UPDATE products_urls SET `status` = 'Closed' WHERE url = '" + url + "'"
-            mycursor.execute(update_sql)
+            if(get_details_result is None):
+                update_sql = "UPDATE products_urls SET `status` = 'Closed' WHERE url = '" + url + "'"
+                mycursor.execute(update_sql)
             commit_result = mydb.commit()
     except Exception:
         print(traceback.format_exc())
@@ -179,6 +179,7 @@ def get_url_details(url):
                                 val = (catalog_id, price, size, inventory) # comma added to allow 1 column to be inserted
                                 mycursor.execute(sql,val)
                                 commit_result = mydb.commit()
+                                return commit_result
                                 #return(commit_result)
                                 #total_urls_saved += 1
                             except Exception:
@@ -211,5 +212,5 @@ def get_url_details(url):
                 mycursor.execute(update_sql)
                 commit_result = mydb.commit()
 
-get_urls(10)
+get_urls(1000)
 
