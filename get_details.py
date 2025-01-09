@@ -56,7 +56,7 @@ def get_urls(limit):
 # Method to retrieve details from given url
 def get_url_details(url):
 
-    #url = "http://biolegend.com/en-us/products/alexa-fluor-700-anti-human-cd64-antibody-17129"
+    #url = "http://biolegend.com/en-us/products/brilliant-violet-510-mouse-igg2b-kappa-isotype-ctrl-8016"
     print("Retrieving URL: ")
     print(url)
     page = requests.get(url, headers=headers)
@@ -106,30 +106,64 @@ def get_url_details(url):
     for row in table.tbody.find_all('tr'):    
         # Find all data for each column
         columns = row.find_all('td')
-        
+
         if(columns != []):
             
+            inventory = 0
             catalog_id = columns[0].text.strip()
             print(catalog_id)
-            if catalog_id:
-                size = columns[1].text.strip()
-                #print(catalog_id)
-                #print(size)
-                span_tag = columns[2].find('span') #find all span tags in data column
-                for attr in span_tag.attrs:
-                    if(attr == 'data-price'):
-                        # print(span_tag['data-price']) # get the value of attribute
-                        price = span_tag['data-price']
-                        #print(price)
-                quantity_label = columns[3].find('label')
-                quantity_input = quantity_label.find('input')
-                inventory = quantity_input['data-stock']
+            if(catalog_id):
+                try:
+                    size = columns[1].text.strip()
+                    span_tag = columns[2].find('span') #find all span tags in data column
+                    for attr in span_tag.attrs:
+                        if(attr == 'data-price'):
+                            price = span_tag['data-price']
+                    try:
+                        quantity_label = columns[3].find('label')
+
+                        #if quantity_label is not None:
+                            #if quantity_label.has_attr('find'):
+                        quantity_input = quantity_label.find('input')
+                        #print(quantity_input)
+                        #print(quantity_input['data-stock'])
+                        inventory = quantity_input['data-stock']
+                    except Exception:
+                        inventory = 0
+                        #print(traceback.format_exc())                            
+
+                except Exception:
+                    size = 0
+                    span_tag = columns[2].find('span') #find all span tags in data column
+                    print(span_tag)
+                    for attr in span_tag.attrs:
+                        print(attr)
+                        if(attr == 'data-price'):
+                            print("attr is data-price")
+                            print(span_tag['data-price']) # get the value of attribute
+                            price = span_tag['data-price']
+                    ''''''
+                    try:       
+                        inventory = 0
+                        quantity_label = columns[3].find('label')
+                        if quantity_label is not None:
+                            if quantity_label.has_attr('find'):
+                                quantity_input = quantity_label.find('input')
+                                inventory = quantity_input['data-stock']
+                    except Exception:
+                        inventory = 0
+                        #print(traceback.format_exc())
+                    ''''''   
+                    
 
                 reagent_attributes.update({"size":size,"price":price,"inventory":inventory})
                 reagent['catalog_id'] = catalog_id
                 reagent['attributes'] = reagent_attributes
+                
+        
 
-                ''' TODO: Insert Reagent information into data store '''
+                # TODO: Insert Reagent information into data store
+                
                 try:
                     mydb = mysql.connector.connect(host='localhost',user='root',password='',database='pinwheel')
 
@@ -137,7 +171,6 @@ def get_url_details(url):
                         mycursor = mydb.cursor()
 
                         sql = "SELECT catalog_id from products WHERE catalog_id = '" + catalog_id + "'"
-                        print(sql)
                         mycursor.execute(sql)
                         mycursor.fetchall()
                         if mycursor.rowcount == 0:
@@ -153,16 +186,16 @@ def get_url_details(url):
                         else:
                             log_message = "Catalog id exists: " + catalog_id
                             Pinwheel.log_entry("Save Reagent", log_message)
-                            print(log_message)
+                            #print(log_message)
                     except Exception:
                         print(traceback.format_exc())
-                    
+
                 except Exception:
                     print("Could not connect to data store")
                     log_message = traceback.format_exc()    
                     Pinwheel.log_entry("Data store error", log_message)
                     sys.exit(1)
-        
+                
                 
                 #data = {"agent":{"catalog_id":catalog_id,"size":size,"price":price,"inventory":inventory}}
                 #json_data = json.dumps(data)
@@ -171,7 +204,12 @@ def get_url_details(url):
     
                 #create filename
                 json_file = "json/" + str(catalog_id) + ".txt"
+            else:
+                mydb = mysql.connector.connect(host='localhost',user='root',password='',database='pinwheel')
+                mycursor = mydb.cursor()
+                update_sql = "UPDATE products_urls SET `status` = 'Error' WHERE url = '" + url + "'"
+                mycursor.execute(update_sql)
+                commit_result = mydb.commit()
 
-
-get_urls(1)
+get_urls(10)
 
