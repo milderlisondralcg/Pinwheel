@@ -29,10 +29,19 @@ except Exception:
     #print(traceback.format_exc())
     sys.exit(1)
 
-# Retrieve URLs
 def get_urls(limit):
-             
-    # Select a limited amount of URLs to read
+    """Retrieves urls with given limit.
+    Parameters
+    ----------
+    limit : int, required
+    The number of records to retrieve
+
+    Raises
+    ------
+    NotImplementedError
+        If no sound is set for the animal or passed in as a
+        parameter.
+    """
     try:
         mycursor = mydb.cursor()
 
@@ -76,6 +85,7 @@ def get_url_details(url):
     total_data = {}
     reagent = {}
     reagent_attributes = {}
+    reagent_product_details = {}
 
     # Add data to details list to Dictionary
     index = 0
@@ -164,6 +174,20 @@ def get_url_details(url):
 
                 # TODO: Insert Reagent information into data store
                 
+                product__details_section = soup_obj.find(id='ProductDetailsContainer')
+                labels = product__details_section.find_all('dt') # Returns a list
+                label_val = product__details_section.find_all('dd') # Returns a list
+               
+                for val in labels:
+                    label = val.decode_contents().strip()
+                    #print(val.decode_contents().strip())
+                    #print(val.findNext('dd').contents[0].strip())
+                    label_val = val.findNext('dd').contents[0].strip()
+
+                    reagent_product_details.update({label:label_val})
+
+                print(reagent_product_details)
+
                 try:
                     mydb = mysql.connector.connect(host='localhost',user='root',password='',database='pinwheel')
 
@@ -212,5 +236,5 @@ def get_url_details(url):
                 mycursor.execute(update_sql)
                 commit_result = mydb.commit()
 
-get_urls(1000)
+get_urls(1)
 
