@@ -80,12 +80,14 @@ def get_url_details(url):
     #print(product_details_headings)
     #print(product_details_values)
 
+    # Dictionaries
     product_info_data = {}
     product_details_data = {}
     total_data = {}
     reagent = {}
     reagent_attributes = {}
     reagent_product_details = {}
+    antigen_details = {}
 
     # Add data to details list to Dictionary
     index = 0
@@ -174,19 +176,41 @@ def get_url_details(url):
 
                 # TODO: Insert Reagent information into data store
                 
+                # Product Details 
                 product__details_section = soup_obj.find(id='ProductDetailsContainer')
-                labels = product__details_section.find_all('dt') # Returns a list
-                label_val = product__details_section.find_all('dd') # Returns a list
-               
+                labels = product__details_section.find_all('dt')
+                label_val = product__details_section.find_all('dd')
+
                 for val in labels:
                     label = val.decode_contents().strip()
                     #print(val.decode_contents().strip())
                     #print(val.findNext('dd').contents[0].strip())
-                    label_val = val.findNext('dd').contents[0].strip()
+                    label_val = val.findNext('dd').contents[0]
 
                     reagent_product_details.update({label:label_val})
 
-                print(reagent_product_details)
+                #print(reagent_product_details)
+
+                reagent['product_details'] = reagent_product_details
+                # Antigen Details
+                antigen_details_section = soup_obj.find(id='antigenDetails')
+                labels = antigen_details_section.find_all('dt')
+
+                for val in labels:
+                    label = val.decode_contents().strip()
+                    label_val = val.findNext('dd').contents[0].strip()
+
+                    antigen_details.update({label:label_val})
+
+                #print(antigen_details)
+                reagent['antigen_details'] = antigen_details
+                json_string = json.dumps(reagent, indent=4)
+                print(json_string)
+
+                #create JSON file of current reagent
+                json_file = "json/" + str(catalog_id) + ".txt"
+                with open(json_file,"a", encoding="utf-8") as text:
+                    text.write(json_string)
 
                 try:
                     mydb = mysql.connector.connect(host='localhost',user='root',password='',database='pinwheel')
@@ -236,5 +260,5 @@ def get_url_details(url):
                 mycursor.execute(update_sql)
                 commit_result = mydb.commit()
 
-get_urls(1)
+get_urls(20)
 
